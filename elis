@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#8FABD4">
+    <title>Trip Jitu - Panduan Wisata Solo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="manifest" href="#" id="manifest-placeholder">
+    <style>
+        :root {
+            --primary-color: #8FABD4;
+            --bg-light: #ffffff;
+            --bg-dark: #1a1a2e;
+            --text-light: #333333;
+            --text-dark: #f0f0f0;
+            --card-light: #f8f9fa;
+            --card-dark: #2d2d44;
+        }
+
+        * {
+            font-family: 'EB Garamond', serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            transition: all 0.3s ease;
+            padding-bottom: 70px;
+        }
+
+        body.dark-mode {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+
+        body.dark-mode .card {
+            background-color: var(--card-dark);
+            color: var(--text-dark);
+        }
+
+        body.dark-mode .navbar {
+            background-color: var(--card-dark) !important;
+        }
+
+        body.dark-mode .bottom-nav {
+            background-color: var(--card-dark);
+        }
+
+        body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+            background-color: #3a3a52;
+            color: var(--text-dark);
+            border-color: #4a4a62;
+        }
+
+        .navbar {
+            background-color: var(--primary-color) !important;
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+
+        .bottom-nav .nav-item {
+            flex: 1;
+            text-align: center;
+        }
+
+        .bottom-nav .nav-link {
+            color: #666;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+        }
+
+        .bottom-nav .nav-link.active {
+            color: var(--primary-color);
+        }
+
+        .destination-card {
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 15px;
+        }
+
+        .destination-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .filter-btn {
+            margin: 5px;
+            border-radius: 20px;
+        }
+
+        .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .back-btn {
+            cursor: pointer;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .icon {
+            width: 24px;
+            height: 24px;
+            display: inline-block;
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .itinerary-item {
+            border-left: 3px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 15px;
+        }
+
+        .badge-custom {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+
+        .search-box {
+            border-radius: 25px;
+            border: 2px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-dark">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1">🗺️ Trip Jitu</span>
+            <div class="theme-toggle" onclick="toggleTheme()">
+                <span id="theme-icon">🌙</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-3">
+        <!-- Explore Page -->
+        <div id="explore-page" class="page active">
+            <h2 class="mb-3">Jelajahi Solo</h2>
+            <input type="text" class="form-control search-box mb-3" id="search-input" placeholder="🔍 Cari tempat wisata atau kuliner...">
+            
+            <div class="mb-3">
+                <button class="btn btn-outline-secondary filter-btn active" data-filter="all">Semua</button>
+                <button class="btn btn-outline-secondary filter-btn" data-filter="wisata-kota">Wisata Kota</button>
+                <button class="btn btn-outline-secondary filter-btn" data-filter="sejarah">Sejarah</button>
+                <button class="btn btn-outline-secondary filter-btn" data-filter="alam">Alam</button>
+                <button class="btn btn-outline-secondary filter-btn" data-filter="kuliner">Kuliner</button>
+                <button class="btn btn-outline-secondary filter-btn" data-filter="gratis">Gratis</button>
+            </div>
+
+            <div id="destinations-list" class="row"></div>
+        </div>
+
+        <!-- Detail Page -->
+        <div id="detail-page" class="page">
+            <div class="back-btn" onclick="showPage('explore-page')">← Kembali</div>
+            <div id="detail-content"></div>
+        </div>
+
+        <!-- Itinerary Page -->
+        <div id="itinerary-page" class="page">
+            <h2 class="mb-3">Rencana Perjalanan</h2>
+            <button class="btn btn-primary mb-3" onclick="showAddItinerary()">+ Tambah Tujuan</button>
+            <div id="itinerary-list"></div>
+        </div>
+
+        <!-- Add Itinerary Page -->
+        <div id="add-itinerary-page" class="page">
+            <div class="back-btn" onclick="showPage('itinerary-page')">← Kembali</div>
+            <h3 class="mb-3">Tambah Tujuan</h3>
+            <div class="mb-3">
+                <label class="form-label">Pilih Destinasi</label>
+                <select class="form-select" id="itinerary-destination">
+                    <option value="">-- Pilih Destinasi --</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Tanggal</label>
+                <input type="date" class="form-control" id="itinerary-date">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Waktu</label>
+                <input type="time" class="form-control" id="itinerary-time">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Catatan (Opsional)</label>
+                <textarea class="form-control" id="itinerary-notes" rows="3"></textarea>
+            </div>
+            <button class="btn btn-success w-100" onclick="saveItinerary()">💾 Simpan</button>
+        </div>
+
+        <!-- Profile Page -->
+        <div id="profile-page" class="page">
+            <div class="text-center mb-4">
+                <div style="font-size: 80px;">👤</div>
+                <h3 id="profile-name">Traveler Solo</h3>
+                <button class="btn btn-sm btn-outline-primary" onclick="editProfileName()">✏️ Edit Nama</button>
+            </div>
+
+            <div class="list-group">
+                <a href="#" class="list-group-item list-group-item-action" onclick="showItineraryHistory()">
+                    📋 Riwayat Itinerary
+                </a>
+                <a href="#" class="list-group-item list-group-item-action" onclick="showWishlist()">
+                    ❤️ Wishlist
+                </a>
+            </div>
+        </div>
+
+        <!-- Itinerary History Page -->
+        <div id="history-page" class="page">
+            <div class="back-btn" onclick="showPage('profile-page')">← Kembali</div>
+            <h3 class="mb-3">Riwayat Itinerary</h3>
+            <div id="history-list"></div>
+        </div>
+
+        <!-- Wishlist Page -->
+        <div id="wishlist-page" class="page">
+            <div class="back-btn" onclick="showPage('profile-page')">← Kembali</div>
+            <h3 class="mb-3">Wishlist Saya</h3>
+            <div id="wishlist-list" class="row"></div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <ul class="nav nav-fill">
+            <li class="nav-item">
+                <a class="nav-link active" href="#" onclick="showPage('explore-page')">
+                    <span style="font-size: 24px;">🗺️</span>
+                    <small>Explore</small>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="showPage('itinerary-page')">
+                    <span style="font-size: 24px;">📅</span>
+                    <small>Itinerary</small>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="#" onclick="showPage('profile-page')">
+                    <span style="font-size: 24px;">👤</span>
+                    <small>Profile</small>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Data destinasi
+        const destinations = [
+            // Wisata
+            {id: 1, name: "Keraton Kasunanan Surakarta", category: ["sejarah", "wisata-kota"], type: "wisata", price: "Rp 15.000", description: "Istana resmi Kasunanan Surakarta yang masih berfungsi hingga kini", image: "🏰"},
+            {id: 2, name: "Taman Balekambang", category: ["alam", "wisata-kota"], type: "wisata", price: "Rp 10.000", description: "Taman dengan danau dan bangunan bergaya Eropa", image: "🌳"},
+            {id: 3, name: "Museum Radya Pustaka", category: ["sejarah", "wisata-kota"], type: "wisata", price: "Rp 5.000", description: "Museum tertua di Indonesia dengan koleksi budaya Jawa", image: "🏛️"},
+            {id: 4, name: "Pasar Gede", category: ["wisata-kota"], type: "wisata", price: "Gratis", description: "Pasar tradisional ikonik di Solo", image: "🏪"},
+            {id: 5, name: "Taman Sriwedari", category: ["alam", "wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Taman kota dengan wahana dan pertunjukan wayang", image: "🎭"},
+            {id: 6, name: "Pura Mangkunegaran", category: ["sejarah", "wisata-kota"], type: "wisata", price: "Rp 20.000", description: "Istana kerajaan dengan arsitektur Jawa klasik", image: "🏯"},
+            {id: 7, name: "Benteng Vastenburg", category: ["sejarah", "wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Benteng peninggalan Belanda", image: "🏰"},
+            {id: 8, name: "Kampung Batik Laweyan", category: ["wisata-kota"], type: "wisata", price: "Gratis", description: "Kampung pengrajin batik tradisional", image: "🎨"},
+            {id: 9, name: "Museum Batik Danar Hadi", category: ["sejarah", "wisata-kota"], type: "wisata", price: "Rp 35.000", description: "Museum dengan koleksi batik terlengkap", image: "👘"},
+            {id: 10, name: "Tugu Lilin", category: ["wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Monumen ikonik di pusat kota Solo", image: "🕯️"},
+            {id: 11, name: "Masjid Agung Solo", category: ["sejarah", "wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Masjid bersejarah dengan arsitektur megah", image: "🕌"},
+            {id: 12, name: "Solo Paragon Mall", category: ["wisata-kota"], type: "wisata", price: "Gratis", description: "Pusat perbelanjaan modern di Solo", image: "🏬"},
+            {id: 13, name: "Taman Sekartaji", category: ["alam", "wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Taman kota dengan jogging track", image: "🌺"},
+            {id: 14, name: "Candi Sukuh", category: ["sejarah", "alam"], type: "wisata", price: "Rp 10.000", description: "Candi Hindu di lereng Gunung Lawu", image: "⛰️"},
+            {id: 15, name: "Candi Cetho", category: ["sejarah", "alam"], type: "wisata", price: "Rp 10.000", description: "Candi dengan pemandangan pegunungan", image: "🏔️"},
+            {id: 16, name: "Air Terjun Grojokan Sewu", category: ["alam"], type: "wisata", price: "Rp 10.000", description: "Air terjun cantik di Tawangmangu", image: "💦"},
+            {id: 17, name: "Kebun Teh Kemuning", category: ["alam"], type: "wisata", price: "Rp 5.000", description: "Perkebunan teh dengan pemandangan indah", image: "🍃"},
+            {id: 18, name: "Waduk Gajah Mungkur", category: ["alam"], type: "wisata", price: "Gratis", description: "Waduk luas dengan aktivitas air", image: "🌊"},
+            {id: 19, name: "Taman Jurug", category: ["alam", "wisata-kota"], type: "wisata", price: "Rp 15.000", description: "Kebun binatang di Solo", image: "🦁"},
+            {id: 20, name: "Pasar Klewer", category: ["wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Pusat perdagangan batik terbesar", image: "🛍️"},
+            {id: 21, name: "Solo Grand Mall", category: ["wisata-kota"], type: "wisata", price: "Gratis", description: "Mall dengan berbagai tenant", image: "🏢"},
+            {id: 22, name: "Alun-alun Kidul", category: ["wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Alun-alun selatan Keraton Solo", image: "🌃"},
+            {id: 23, name: "Museum Keris Nusantara", category: ["sejarah", "wisata-kota"], type: "wisata", price: "Rp 10.000", description: "Museum koleksi keris dari berbagai daerah", image: "⚔️"},
+            {id: 24, name: "Taman Tirtonadi", category: ["alam", "wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Taman kota dengan fasilitas olahraga", image: "⚽"},
+            {id: 25, name: "Masjid Laweyan", category: ["sejarah", "wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Masjid bersejarah di Kampung Batik", image: "🕌"},
+            {id: 26, name: "Sangiran", category: ["sejarah"], type: "wisata", price: "Rp 10.000", description: "Situs purbakala manusia purba", image: "🦴"},
+            {id: 27, name: "Pandawa Water World", category: ["alam", "wisata-kota"], type: "wisata", price: "Rp 50.000", description: "Taman air dengan berbagai wahana", image: "🏊"},
+            {id: 28, name: "Taman Satwa Taru Jurug", category: ["alam", "wisata-kota"], type: "wisata", price: "Rp 15.000", description: "Kebun binatang dengan koleksi lengkap", image: "🐘"},
+            {id: 29, name: "Kampung Wisata Kauman", category: ["wisata-kota", "gratis"], type: "wisata", price: "Gratis", description: "Kampung heritage dengan rumah tradisional", image: "🏘️"},
+            {id: 30, name: "Omah Sinten Heritage", category: ["sejarah", "wisata-kota"], type: "wisata", price: "Rp 25.000", description: "Rumah heritage yang dijadikan museum", image: "🏠"},
+            
+            // Kuliner
+            {id: 31, name: "Sate Kere Yu Rebi", category: ["kuliner"], type: "kuliner", price: "Rp 20.000", description: "Sate khas Solo dengan bumbu kacang", image: "🍢"},
+            {id: 32, name: "Nasi Liwet Wongso Lemu", category: ["kuliner"], type: "kuliner", price: "Rp 25.000", description: "Nasi liwet legendaris di Solo", image: "🍚"},
+            {id: 33, name: "Timlo Sastro", category: ["kuliner"], type: "kuliner", price: "Rp 30.000", description: "Sup khas Solo dengan isian lengkap", image: "🍲"},
+            {id: 34, name: "Soto Gading", category: ["kuliner"], type: "kuliner", price: "Rp 18.000", description: "Soto daging khas Solo", image: "🥘"},
+            {id: 35, name: "Tengkleng Gajah", category: ["kuliner"], type: "kuliner", price: "Rp 25.000", description: "Sup tulang kambing khas Solo", image: "🍖"},
+            {id: 36, name: "Selat Solo Mbak Lies", category: ["kuliner"], type: "kuliner", price: "Rp 35.000", description: "Hidangan fusion Jawa-Belanda", image: "🥩"},
+            {id: 37, name: "Serabi Notosuman", category: ["kuliner"], type: "kuliner", price: "Rp 15.000", description: "Serabi khas Solo dengan topping lengkap", image: "🥞"},
+            {id: 38, name: "Cabuk Rambak Solo", category: ["kuliner"], type: "kuliner", price: "Rp 20.000", description: "Kerupuk kulit dengan sambal", image: "🥓"},
+            {id: 39, name: "Intip Gudeg Yu Nap", category: ["kuliner"], type: "kuliner", price: "Rp 18.000", description: "Intip (kerak nasi) dengan gudeg", image: "🍱"},
+            {id: 40, name: "Bakso Pak Min", category: ["kuliner"], type: "kuliner", price: "Rp 15.000", description: "Bakso terkenal di Solo", image: "🍜"},
+            {id: 41, name: "Pecel Ndeso Ibu Wido", category: ["kuliner"], type: "kuliner", price: "Rp 12.000", description: "Pecel dengan sayuran segar", image: "🥗"},
+            {id: 42, name: "Wedang Ronde Keprabon", category: ["kuliner"], type: "kuliner", price: "Rp 10.000", description: "Minuman hangat dengan isian kacang", image: "☕"},
+            {id: 43, name: "Es Dawet Telasih", category: ["kuliner"], type: "kuliner", price: "Rp 8.000", description: "Dawet dengan santan dan gula merah", image: "🍧"},
+            {id: 44, name: "Buntel Pak Nur", category: ["kuliner"], type: "kuliner", price: "Rp 22.000", description: "Daging cincang dibungkus lemak", image: "🌯"},
+            {id: 45, name: "Ayam Goreng Mbok Berek", category: ["kuliner"], type: "kuliner", price: "Rp 25.000", description: "Ayam goreng legendaris Solo", image: "🍗"},
+            {id: 46, name: "Sate Buntel Pak Kempleng", category: ["kuliner"], type: "kuliner", price: "Rp 20.000", description: "Sate daging cincang dibungkus lemak", image: "🍢"},
+            {id: 47, name: "Bakpia Balong", category: ["kuliner"], type: "kuliner", price: "Rp 30.000", description: "Oleh-oleh khas Solo", image: "🥮"},
+            {id: 48, name: "Loenpia Mbak Lien", category: ["kuliner"], type: "kuliner", price: "Rp 25.000", description: "Lumpia khas Solo dengan rebung", image: "🌯"},
+            {id: 49, name: "Soto Triwindu", category: ["kuliner"], type: "kuliner", price: "Rp 18.000", description: "Soto daging dengan kuah bening", image: "🍲"},
+            {id: 50, name: "Pecel Pincuk Ibu Sri", category: ["kuliner"], type: "kuliner", price: "Rp 10.000", description: "Pecel dengan pincuk daun pisang", image: "🥗"},
+            {id: 51, name: "Bestik Solo Pak Lemu", category: ["kuliner"], type: "kuliner", price: "Rp 35.000", description: "Steak ala Solo dengan saus khas", image: "🥩"},
+            {id: 52, name: "Nasi Pecel Bu Kis", category: ["kuliner"], type: "kuliner", price: "Rp 12.000", description: "Nasi pecel dengan lauk lengkap", image: "🍛"},
+            {id: 53, name: "Kue Pancong Gladak", category: ["kuliner"], type: "kuliner", price: "Rp 8.000", description: "Kue pancong tradisional", image: "🧇"},
+            {id: 54, name: "Cakwe Pasar Gede", category: ["kuliner"], type: "kuliner", price: "Rp 5.000", description: "Cakwe goreng krispi", image: "🥖"},
+            {id: 55, name: "Wedang Uwuh", category: ["kuliner"], type: "kuliner", price: "Rp 10.000", description: "Minuman rempah khas Solo", image: "🍵"},
+            {id: 56, name: "Tahok Pak Dewo", category: ["kuliner"], type: "kuliner", price: "Rp 8.000", description: "Tahu hangat dengan gula merah", image: "🍮"},
+            {id: 57, name: "Jenang Mbah Lijah", category: ["kuliner"], type: "kuliner", price: "Rp 15.000", description: "Jenang tradisional berbagai rasa", image: "🍯"},
+            {id: 58, name: "Nasi Gudeg Ceker Margoyudan", category: ["kuliner"], type: "kuliner", price: "Rp 20.000", description: "Gudeg dengan ceker ayam", image: "🍗"},
+            {id: 59, name: "Kupat Tahu Pak Kebo", category: ["kuliner"], type: "kuliner", price: "Rp 12.000", description: "Kupat tahu dengan bumbu kacang", image: "🥙"},
+            {id: 60, name: "Nasi Jamblang", category: ["kuliner"], type: "kuliner", price: "Rp 15.000", description: "Nasi dengan lauk pilihan", image: "🍱"}
+        ];
+
+        // Initialize app
+        let currentFilter = 'all';
+        let currentPage = 'explore-page';
+        let itineraries = JSON.parse(localStorage.getItem('itineraries')) || [];
+        let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
+        let profileName = localStorage.getItem('profileName') || 'Traveler Solo';
+        let darkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Apply dark mode on load
+        if (darkMode) {
+            document.body.classList.add('dark-mode');
+            document.getElementById('theme-icon').textContent = '☀️';
+        }
+
+        // Display profile name
+        document.getElementById('profile-name').textContent = profileName;
+
+        // Show destinations
+        function displayDestinations(filter = 'all', search = '') {
+            const container = document.getElementById('destinations-list');
+            const filtered = destinations.filter(d => {
+                const matchFilter = filter === 'all' || d.category.includes(filter);
+                const matchSearch = d.name.toLowerCase().includes(search.toLowerCase());
+                return matchFilter && matchSearch;
+            });
+
+            container.innerHTML = filtered.map(d => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card destination-card" onclick="showDetail(${d.id})">
+                        <div class="card-body">
+                            <div style="font-size: 48px; text-align: center;">${d.image}</div>
+                            <h5 class="card-title">${d.name}</h5>
+                            <p class="card-text text-muted">${d.description}</p>
+                            <div>
+                                <span class="badge-custom">${d.type === 'wisata' ? '🗺️ Wisata' : '🍽️ Kuliner'}</span>
+                                <span class="badge-custom">${d.price}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentFilter = this.dataset.filter;
+                displayDestinations(currentFilter, document.getElementById('search-input').value);
+            });
+        });
+
+        // Search
+        document.getElementById('search-input').addEventListener('input', function() {
+            displayDestinations(currentFilter, this.value);
+        });
+
+        // Show detail
+        function showDetail(id) {
+            const dest = destinations.find(d => d.id === id);
+            const isInWishlist = wishlist.some(w => w.id === id);
+            
+            document.getElementById('detail-content').innerHTML = `
+                <div class="card">
+                    <div class="card-body">
+                        <div style="font-size: 120px; text-align: center;">${dest.image}</div>
+                        <h2>${dest.name}</h2>
+                        <p>${dest.description}</p>
+                        <div class="mb-3">
+                            ${dest.category.map(c => `<span class="badge-custom">${c}</span>`).join(' ')}
+                        </div>
+                        <h4>Harga: ${dest.price}</h4>
+                        <div class="d-grid gap-2 mt-3">
+                            <button class="btn btn-outline-danger" onclick="toggleWishlist(${id})">
+                                ${isInWishlist ? '💔 Hapus dari Wishlist' : '❤️ Tambah ke Wishlist'}
+                            </button>
+                            <button class="btn btn-primary" onclick="addToItineraryFromDetail(${id})">
+                                📅 Tambah ke Itinerary
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            showPage('detail-page');
+        }
+
+        // Toggle wishlist
+        function toggleWishlist(id) {
+            const index = wishlist.findIndex(w => w.id === id);
+            if (index > -1) {
+                wishlist.splice(index, 1);
+                alert('Dihapus dari wishlist!');
+            } else {
+                const dest = destinations.find(d => d.id === id);
+                wishlist.push(dest);
+                alert('Ditambahkan ke wishlist!');
+            }
+            localStorage.setItem('wishlist', JSON.stringify(wishlist));
+            showDetail(id); // Refresh detail
+        }
+
+        // Add to itinerary from detail
+        function addToItineraryFromDetail(id) {
+            const dest = destinations.find(d => d.id === id);
+            document.getElementById('itinerary-destination').value = id;
+            showPage('add-itinerary-page');
+        }
+
+        // Show pages
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            // Update bottom nav
+            document.querySelectorAll('.bottom-nav .nav-link').forEach(l => l.classList.remove('active'));
+            if (pageId === 'explore-page') {
+                document.querySelectorAll('.bottom-nav .nav-link')[0].classList.add('active');
+            } else if (pageId === 'itinerary-page') {
+                document.querySelectorAll('.bottom-nav .nav-link')[1].classList.add('active');
+                displayItineraries();
+            } else if (pageId === 'profile-page') {
+                document.querySelectorAll('.bottom-nav .nav-link')[2].classList.add('active');
+            }
+            
+            currentPage = pageId;
+        }
+
+        // Show add itinerary
+        function showAddItinerary() {
+            // Populate destination select
+            const select = document.getElementById('itinerary-destination');
+            select.innerHTML = '<option value="">-- Pilih Destinasi --</option>' + 
+                destinations.map(d => `<option value="${d.id}">${d.image} ${d.name}</option>`).join('');
+            
+            // Set default date to today
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('itinerary-date').value = today;
+            document.getElementById('itinerary-time').value = '09:00';
+            document.getElementById('itinerary-notes').value = '';
+            
+            showPage('add-itinerary-page');
+        }
+
+        // Save itinerary
+        function saveItinerary() {
+            const destId = parseInt(document.getElementById('itinerary-destination').value);
+            const date = document.getElementById('itinerary-date').value;
+            const time = document.getElementById('itinerary-time').value;
+            const notes = document.getElementById('itinerary-notes').value;
+
+            if (!destId || !date || !time) {
+                alert('Mohon lengkapi semua field!');
+                return;
+            }
+
+            const dest = destinations.find(d => d.id === destId);
+            const itinerary = {
+                id: Date.now(),
+                destination: dest,
+                date: date,
+                time: time,
+                notes: notes,
+                createdAt: new Date().toISOString()
+            };
+
+            itineraries.push(itinerary);
+            localStorage.setItem('itineraries', JSON.stringify(itineraries));
+            
+            alert('✅ Berhasil ditambahkan ke itinerary!');
+            showPage('itinerary-page');
+        }
+
+        // Display itineraries
+        function displayItineraries() {
+            const container = document.getElementById('itinerary-list');
+            
+            if (itineraries.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">Belum ada rencana perjalanan. Tambahkan sekarang!</div>';
+                return;
+            }
+
+            // Group by date
+            const grouped = {};
+            itineraries.forEach(it => {
+                if (!grouped[it.date]) grouped[it.date] = [];
+                grouped[it.date].push(it);
+            });
+
+            // Sort by time within each date
+            Object.keys(grouped).forEach(date => {
+                grouped[date].sort((a, b) => a.time.localeCompare(b.time));
+            });
+
+            container.innerHTML = Object.keys(grouped).sort().map(date => `
+                <div class="mb-4">
+                    <h5>📅 ${formatDate(date)}</h5>
+                    ${grouped[date].map(it => `
+                        <div class="card mb-2 itinerary-item">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6>${it.time} - ${it.destination.image} ${it.destination.name}</h6>
+                                        <p class="text-muted mb-1">${it.destination.description}</p>
+                                        ${it.notes ? `<p class="mb-0"><small>📝 ${it.notes}</small></p>` : ''}
+                                    </div>
+                                    <button class="btn btn-sm btn-danger" onclick="deleteItinerary(${it.id})">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `).join('');
+        }
+
+        // Delete itinerary
+        function deleteItinerary(id) {
+            if (confirm('Hapus dari itinerary?')) {
+                itineraries = itineraries.filter(it => it.id !== id);
+                localStorage.setItem('itineraries', JSON.stringify(itineraries));
+                displayItineraries();
+            }
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            const date = new Date(dateStr);
+            const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            return `${days[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`;
+        }
+
+        // Show itinerary history
+        function showItineraryHistory() {
+            const container = document.getElementById('history-list');
+            
+            if (itineraries.length === 0) {
+                container.innerHTML = '<div class="alert alert-info">Belum ada riwayat itinerary.</div>';
+            } else {
+                const sorted = [...itineraries].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                container.innerHTML = sorted.map(it => `
+                    <div class="card mb-2">
+                        <div class="card-body">
+                            <h6>${it.destination.image} ${it.destination.name}</h6>
+                            <p class="mb-1 text-muted">📅 ${formatDate(it.date)} - ⏰ ${it.time}</p>
+                            ${it.notes ? `<p class="mb-0"><small>📝 ${it.notes}</small></p>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            showPage('history-page');
+        }
+
+        // Show wishlist
+        function showWishlist() {
+            const container = document.getElementById('wishlist-list');
+            
+            if (wishlist.length === 0) {
+                container.innerHTML = '<div class="col-12"><div class="alert alert-info">Wishlist masih kosong.</div></div>';
+            } else {
+                container.innerHTML = wishlist.map(d => `
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card destination-card" onclick="showDetailFromWishlist(${d.id})">
+                            <div class="card-body">
+                                <div style="font-size: 48px; text-align: center;">${d.image}</div>
+                                <h5 class="card-title">${d.name}</h5>
+                                <p class="card-text text-muted">${d.description}</p>
+                                <button class="btn btn-sm btn-danger w-100" onclick="event.stopPropagation(); removeFromWishlist(${d.id})">
+                                    🗑️ Hapus
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            showPage('wishlist-page');
+        }
+
+        // Show detail from wishlist
+        function showDetailFromWishlist(id) {
+            showDetail(id);
+            // Add back button to wishlist
+            document.querySelector('#detail-page .back-btn').onclick = function() {
+                showWishlist();
+            };
+        }
+
+        // Remove from wishlist
+        function removeFromWishlist(id) {
+            wishlist = wishlist.filter(w => w.id !== id);
+            localStorage.setItem('wishlist', JSON.stringify(wishlist));
+            showWishlist();
+        }
+
+        // Edit profile name
+        function editProfileName() {
+            const newName = prompt('Masukkan nama Anda:', profileName);
+            if (newName && newName.trim()) {
+                profileName = newName.trim();
+                localStorage.setItem('profileName', profileName);
+                document.getElementById('profile-name').textContent = profileName;
+            }
+        }
+
+        // Toggle theme
+        function toggleTheme() {
+            darkMode = !darkMode;
+            document.body.classList.toggle('dark-mode');
+            document.getElementById('theme-icon').textContent = darkMode ? '☀️' : '🌙';
+            localStorage.setItem('darkMode', darkMode);
+        }
+
+        // Initialize
+        displayDestinations();
+
+        // PWA Support
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register(createServiceWorkerBlob()).then(reg => {
+                console.log('Service Worker registered');
+            }).catch(err => {
+                console.log('Service Worker registration failed:', err);
+            });
+        }
+
+        function createServiceWorkerBlob() {
+            const swCode = `
+                const CACHE_NAME = 'trip-jitu-v1';
+                const urlsToCache = ['/'];
+
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+                    );
+                });
+
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request).then(response => {
+                            return response || fetch(event.request);
+                        })
+                    );
+                });
+            `;
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            return URL.createObjectURL(blob);
+        }
+
+        // Create manifest
+        const manifestData = {
+            name: 'Trip Jitu - Panduan Wisata Solo',
+            short_name: 'Trip Jitu',
+            description: 'Aplikasi panduan wisata dan kuliner kota Solo',
+            start_url: '.',
+            display: 'standalone',
+            background_color: '#8FABD4',
+            theme_color: '#8FABD4',
+            orientation: 'portrait',
+            icons: [
+                {
+                    src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="80">🗺️</text></svg>',
+                    sizes: '192x192',
+                    type: 'image/svg+xml'
+                },
+                {
+                    src: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="75" font-size="80">🗺️</text></svg>',
+                    sizes: '512x512',
+                    type: 'image/svg+xml'
+                }
+            ]
+        };
+
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        document.getElementById('manifest-placeholder').setAttribute('href', manifestURL);
+    </script>
+</body>
+</html>
